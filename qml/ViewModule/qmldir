@@ -1,0 +1,3 @@
+module ViewModule
+BallDelegate 1.0 BallDelegate.qml
+GameField 1.0 GameField.qml

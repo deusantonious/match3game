@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>qml/StyleConfig/qmldir</file>
+        <file>qml/StyleConfig/Config.qml</file>
+        <file>qml/TopBar/qmldir</file>
+        <file>qml/TopBar/TopBar.qml</file>
+        <file>qml/ViewModule/BallDelegate.qml</file>
+        <file>qml/ViewModule/GameField.qml</file>
+        <file>qml/ViewModule/qmldir</file>
+    </qresource>
+</RCC>
