@@ -1,8 +1,11 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import StyleConfig 1.0
 
 MouseArea {
     id: root
+
+    property string displayedСolor: {""}
+    property bool selected: false
 
     Rectangle {
         id: ball
@@ -12,8 +15,19 @@ MouseArea {
             fill: parent
         }
 
-        color: itemColor
+        color: displayedСolor
 
         radius: root.height
+
+        scale: selected === true ?
+                   StyleConfig.ballScaleIfSelected :
+                   1
+
+        Behavior on scale {
+            ScaleAnimator {
+                target: ball;
+                duration: StyleConfig.ballScaleaAnimationDuration
+            }
+        }
     }
 }

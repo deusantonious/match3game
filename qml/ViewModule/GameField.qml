@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import GameFieldModel 1.0;
+import StyleConfig 1.0
 
 Item {
     id: root
@@ -27,6 +28,7 @@ Item {
 
         model: GameModel {
             id: gameModel
+
         }
 
         delegate: BallDelegate {
@@ -34,6 +36,31 @@ Item {
 
             width: grid.cellWidth
             height: grid.cellHeight
+
+            displayedСolor: itemColor
+
+            onClicked: {
+                gameModel.selectItem(index)
+            }
+
+            selected: isSelected ?
+                          true :
+                          false
+        }
+
+        moveDisplaced: Transition {
+            NumberAnimation {
+                properties: "x"
+                duration: StyleConfig.ballMoveAnimationDuration;
+            }
+        }
+
+        move: Transition {
+            NumberAnimation {
+                properties: "x, y"
+                duration: StyleConfig.ballMoveAnimationDuration;
+            }
+
         }
     }
 }

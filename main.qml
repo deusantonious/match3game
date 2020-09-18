@@ -29,6 +29,7 @@ Window {
 
     GameField {
         id: gameField
+
         width: root.width
         height: root.height - topBar.height
 

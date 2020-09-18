@@ -14,4 +14,8 @@ QtObject {
     readonly property double resetButtonBrightnessContainsMouse: -0.1
 
     readonly property double ballMarginsKoefficient: 0.05
+
+    readonly property double ballScaleIfSelected: 0.7
+    readonly property double ballScaleaAnimationDuration: 100
+    readonly property double ballMoveAnimationDuration: 200
 }
