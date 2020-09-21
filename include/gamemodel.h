@@ -40,6 +40,8 @@ public:
 
 private: // methods
     bool swapItems(int newPositionIndex);
+    bool removeAviableIfSwapRows(int oldPositionIndex, int newPositionIndex);
+    bool removeAviableIfSwapColumns(int oldPositionIndex, int newPositionIndex);
 private: // vars
     int m_gameFieldWidth;
     int m_gameFieldHeight;
