@@ -39,13 +39,14 @@ Item {
 
             displayedСolor: itemColor
 
-            onClicked: {
-                gameModel.selectItem(index)
-            }
-
+            isVisible: ballIsVisible
             selected: isSelected ?
                           true :
                           false
+
+            onClicked: {
+                gameModel.selectItem(index)
+            }
         }
 
         moveDisplaced: Transition {
@@ -60,7 +61,6 @@ Item {
                 properties: "x, y"
                 duration: StyleConfig.ballMoveAnimationDuration;
             }
-
         }
     }
 }

@@ -29,7 +29,8 @@ public:
 
     enum {
         ItemColor = Qt::UserRole + 1,
-        IsSelected
+        IsSelected,
+        BallIsVisible
     };
 
     int getGameFieldWidth() const;
@@ -38,10 +39,14 @@ public:
     Q_INVOKABLE void gameFieldReset();
     Q_INVOKABLE void selectItem(int index);
 
+
 private: // methods
-    bool swapItems(int newPositionIndex);
+    bool swapAviable(int newPositionIndex);
+    bool swapSelectedItem (int newPositionIndex);
     bool removeAviableIfSwapRows(int oldPositionIndex, int newPositionIndex);
     bool removeAviableIfSwapColumns(int oldPositionIndex, int newPositionIndex);
+    void removeIfPossible();
+    void moveToFloor();
 private: // vars
     int m_gameFieldWidth;
     int m_gameFieldHeight;

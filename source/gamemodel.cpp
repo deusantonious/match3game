@@ -70,6 +70,17 @@ QVariant GameModel::data(const QModelIndex &index, int role) const
             break;
         }
     }
+    case BallIsVisible: {
+        if (m_gameField.at(index.row()) == "black") {
+            returnValue = QVariant {false};
+            break;
+        }
+        else {
+            returnValue = QVariant {true};
+            break;
+        }
+        break;
+    }
 }
 return returnValue;
 }
@@ -80,6 +91,7 @@ QHash<int, QByteArray> GameModel::roleNames() const
 
     roles[ItemColor] = "itemColor";
     roles[IsSelected] = "isSelected";
+    roles[BallIsVisible] = "ballIsVisible";
 
     return roles;
 }
@@ -119,28 +131,36 @@ void GameModel::gameFieldReset()
 
 void GameModel::selectItem(int index)
 {
-    if(m_selectedItemId == -1 || swapItems(index) == false) {
+    int oldSelectedItemId {m_selectedItemId};
 
-        int oldSelectedItemId {-1};
-        if (m_selectedItemId == -1) {
-            oldSelectedItemId = index;
+    if(m_selectedItemId != -1) {
+        if(swapAviable(index) == true) {
+            if(swapSelectedItem(index)) {
+                oldSelectedItemId = index;
+                m_selectedItemId = -1;
+            }
+            else {
+                oldSelectedItemId = index;
+                m_selectedItemId = -1;
+            }
+            //shake animation
         }
         else {
-            oldSelectedItemId = m_selectedItemId;
-        }
-
-        m_selectedItemId = index;
-
-        if(oldSelectedItemId > m_selectedItemId) {
-            emit dataChanged(createIndex(m_selectedItemId, 0), createIndex(oldSelectedItemId, 0), QVector<int> {IsSelected});
-        }
-        else {
-            emit dataChanged(createIndex(oldSelectedItemId, 0), createIndex(m_selectedItemId, 0), QVector<int> {IsSelected});
+            m_selectedItemId = index;
         }
     }
+    else {
+        oldSelectedItemId = index;
+        m_selectedItemId = index;
+    }
+
+    if(index < oldSelectedItemId) {
+        std::swap(index,oldSelectedItemId);
+    }
+    emit dataChanged(createIndex(0, 0), createIndex(m_size - 1, 0), QVector<int> {IsSelected});
 }
 
-bool GameModel::swapItems(int newPositionIndex)
+bool GameModel::swapAviable(int newPositionIndex)
 {
     bool swapIsAviable {false};
 
@@ -164,42 +184,45 @@ bool GameModel::swapItems(int newPositionIndex)
         swapIsAviable = true;
     }
 
-    if (swapIsAviable)
-    {
-        int oldPositionIndex {m_selectedItemId};
-
-        if (oldPositionIndex > newPositionIndex) {
-            std::swap(oldPositionIndex,newPositionIndex);
-        }
-
-       if (newPositionIndex - oldPositionIndex == m_gameFieldWidth) {
-           swapIsAviable = removeAviableIfSwapRows(oldPositionIndex, newPositionIndex);
-       }
-       else {
-           swapIsAviable = removeAviableIfSwapColumns(oldPositionIndex, newPositionIndex);
-       }
-
-        if (swapIsAviable) {
-            std::swap(m_gameField[oldPositionIndex], m_gameField[newPositionIndex]);
-            if (newPositionIndex - oldPositionIndex != 1) {
-                beginMoveRows(QModelIndex(), oldPositionIndex, oldPositionIndex, QModelIndex(), newPositionIndex);
-                endMoveRows();
-                beginMoveRows(QModelIndex(), newPositionIndex, newPositionIndex, QModelIndex(), oldPositionIndex);
-                endMoveRows();
-            }
-            else {
-                beginMoveRows(QModelIndex(), oldPositionIndex, oldPositionIndex, QModelIndex(), newPositionIndex + 1);
-                endMoveRows();
-            }
-
-            m_selectedItemId = -1;
-            emit dataChanged(createIndex(oldPositionIndex, oldPositionIndex), createIndex(newPositionIndex, 0), QVector<int> {});
-
-            return true;
-        }
-
+    if (swapIsAviable) {
+        return true;
     }
     return false;
+}
+
+bool GameModel::swapSelectedItem(int newPositionIndex)
+{
+    bool swapIsAviable;
+    int oldPositionIndex {m_selectedItemId};
+    if (oldPositionIndex > newPositionIndex) {
+        std::swap(oldPositionIndex,newPositionIndex);
+    }
+
+    if (newPositionIndex - oldPositionIndex == m_gameFieldWidth) {
+        swapIsAviable = removeAviableIfSwapRows(oldPositionIndex, newPositionIndex);
+    }
+    else {
+        swapIsAviable = removeAviableIfSwapColumns(oldPositionIndex, newPositionIndex);
+    }
+    if (!swapIsAviable) {
+        return false;
+    }
+    std::swap(m_gameField[oldPositionIndex], m_gameField[newPositionIndex]);
+    if (newPositionIndex - oldPositionIndex != 1) {
+        beginMoveRows(QModelIndex(), oldPositionIndex, oldPositionIndex, QModelIndex(), newPositionIndex);
+        endMoveRows();
+        beginMoveRows(QModelIndex(), newPositionIndex, newPositionIndex, QModelIndex(), oldPositionIndex);
+        endMoveRows();
+    }
+    else {
+        beginMoveRows(QModelIndex(), oldPositionIndex, oldPositionIndex, QModelIndex(), newPositionIndex + 1);
+        endMoveRows();
+    }
+
+    m_selectedItemId = -1;
+    emit dataChanged(createIndex(oldPositionIndex, oldPositionIndex), createIndex(newPositionIndex, 0), QVector<int> {});
+    removeIfPossible();
+    return true;
 }
 
 bool GameModel::removeAviableIfSwapRows(int oldPositionIndex, int newPositionIndex)
@@ -212,18 +235,16 @@ bool GameModel::removeAviableIfSwapRows(int oldPositionIndex, int newPositionInd
         while (i % m_gameFieldWidth >= 0 && m_gameField[i] == m_gameField[newPositionIndex]) {
             i--;
         }
-        rightElement = i == oldPositionIndex - 1 ? oldPositionIndex
-                                                 : i;
+        leftElement = i + 1;
     }
-    if (oldPositionIndex % m_gameFieldWidth != m_gameFieldWidth - 2) {
+    if (oldPositionIndex % m_gameFieldWidth != m_gameFieldWidth - 1) {
         i = oldPositionIndex + 1;
-        while (i % m_gameFieldWidth < m_gameFieldWidth && m_gameField[i] == m_gameField[newPositionIndex]) {
+        while (i < m_size && i % m_gameFieldWidth < m_gameFieldWidth && m_gameField[i] == m_gameField[newPositionIndex]) {
             i++;
         }
-        leftElement = i == oldPositionIndex + 1 ? oldPositionIndex
-                                                : i;
+        rightElement = i - 1;
     }
-    if (leftElement - rightElement < 3) {
+    if (rightElement - leftElement < 2) {
         if (oldPositionIndex > newPositionIndex) {
             return false;
         }
@@ -248,7 +269,7 @@ bool GameModel::removeAviableIfSwapColumns(int oldPositionIndex, int newPosition
     }
     if (newPositionIndex % m_gameFieldWidth < m_gameFieldWidth - 2) {
         i = newPositionIndex + 1;
-        while (i % m_gameFieldWidth >= 0 && m_gameField[i] == m_gameField[oldPositionIndex]) {
+        while (i % m_gameFieldWidth < m_gameFieldWidth && m_gameField[i] == m_gameField[oldPositionIndex]) {
             i++;
         }
         if (i - newPositionIndex >= 3) {
@@ -256,4 +277,54 @@ bool GameModel::removeAviableIfSwapColumns(int oldPositionIndex, int newPosition
         }
     }
     return false;
+}
+
+void GameModel::removeIfPossible()
+{
+    bool itemsRemoved {false};
+    int i {0};
+    int j, k;
+    while (i < m_size - 2) {
+        if(i % m_gameFieldWidth < m_gameFieldWidth - 2) {
+            j = i;
+            while (j < m_size - 1 && (j % m_gameFieldWidth) < m_gameFieldWidth - 1 && m_gameField[i] == m_gameField[j + 1]) {
+                j++;
+            }
+            if (j - i >= 2) {
+                for (k = i; k <= j; k++) {
+                    m_gameField[k] = "black";
+                }
+                itemsRemoved = true;
+                emit dataChanged(createIndex(0, 0), createIndex(m_size - 1, 0), QVector<int> {BallIsVisible});
+            }
+            i = j + 1;
+        }
+        else {
+            i ++;
+        }
+    }
+    if (itemsRemoved) {
+        moveToFloor();
+    }
+}
+
+void GameModel::moveToFloor()
+{
+    bool itemsMoved {false};
+    int i {0};
+    while (i < m_size) {
+        if(m_gameField[i] != "black" && i + m_gameFieldWidth < m_size && m_gameField[i + m_gameFieldWidth] == "black") {
+            std::swap(m_gameField[i], m_gameField[i + m_gameFieldWidth]);
+            beginMoveRows(QModelIndex(), i, i, QModelIndex(), i + m_gameFieldWidth);
+            endMoveRows();
+            beginMoveRows(QModelIndex(), i + m_gameFieldWidth, i + m_gameFieldWidth, QModelIndex(), i);
+            endMoveRows();
+            emit dataChanged(createIndex(i, 0), createIndex(i + m_gameFieldWidth, 0), QVector<int> {});
+            itemsMoved = true;
+        }
+        i++;
+    }
+    if (itemsMoved) {
+        removeIfPossible();
+    }
 }

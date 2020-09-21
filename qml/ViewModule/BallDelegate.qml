@@ -5,6 +5,7 @@ MouseArea {
     id: root
 
     property string displayedСolor: {""}
+    property bool isVisible: true
     property bool selected: false
 
     Rectangle {
@@ -23,11 +24,29 @@ MouseArea {
                    StyleConfig.ballScaleIfSelected :
                    1
 
+        states: [
+            State { when: isVisible;
+                PropertyChanges {   target: ball; opacity: 1.0    }
+            },
+            State { when: !isVisible;
+                PropertyChanges {   target: ball; opacity: 0.0    }
+            }
+        ]
+
         Behavior on scale {
             ScaleAnimator {
                 target: ball;
                 duration: StyleConfig.ballScaleaAnimationDuration
             }
         }
+
+        transitions: [
+            Transition {
+                NumberAnimation {
+                    property: "opacity";
+                    duration: StyleConfig.ballDeleteAnimationDuration
+                }
+            }
+        ]
     }
 }
