@@ -37,6 +37,9 @@ Window {
             top: topBar.bottom
             left: root.left
         }
-    }
 
+        onGameIsLost: {
+            topBar.isLostMessageOn = true;
+        }
+    }
 }

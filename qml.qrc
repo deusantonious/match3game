@@ -8,5 +8,7 @@
         <file>qml/ViewModule/BallDelegate.qml</file>
         <file>qml/ViewModule/GameField.qml</file>
         <file>qml/ViewModule/qmldir</file>
+        <file>qml/TopBar/LostMessage.qml</file>
+        <file>qml/TopBar/WinMessage.qml</file>
     </qresource>
 </RCC>

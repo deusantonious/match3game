@@ -17,6 +17,12 @@ QtObject {
 
     readonly property double ballScaleIfSelected: 0.7
     readonly property double ballScaleaAnimationDuration: 100
-    readonly property double ballMoveAnimationDuration: 200
-    readonly property double ballDeleteAnimationDuration: 200
+    readonly property double ballMoveAnimationDuration: 500
+    readonly property double ballDeleteAnimationDuration: 500
+
+    readonly property double gameStatusMessageMarginKoefficient: 0.02
+    readonly property double gameStatusMessageSizeKoefficient: 0.75
+    readonly property string gameStatusMessageColor: "#a08c7d"
+
+
 }

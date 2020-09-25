@@ -29,16 +29,9 @@ MouseArea {
                 PropertyChanges {   target: ball; opacity: 1.0    }
             },
             State { when: !isVisible;
-                PropertyChanges {   target: ball; opacity: 0.0    }
+                PropertyChanges {   target: ball; opacity: 0    }
             }
         ]
-
-        Behavior on scale {
-            ScaleAnimator {
-                target: ball;
-                duration: StyleConfig.ballScaleaAnimationDuration
-            }
-        }
 
         transitions: [
             Transition {
@@ -48,5 +41,12 @@ MouseArea {
                 }
             }
         ]
+
+        Behavior on scale {
+            ScaleAnimator {
+                target: ball;
+                duration: StyleConfig.ballScaleaAnimationDuration
+            }
+        }
     }
 }

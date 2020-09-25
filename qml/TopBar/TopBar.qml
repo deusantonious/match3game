@@ -6,9 +6,28 @@ import StyleConfig 1.0
 Rectangle {
     id: root
 
+    property alias isWinMessageOn: winMessageLoader.active
+    property alias isLostMessageOn: lostMessageLoader.active
+
     signal resetButtonClicked
 
     color: StyleConfig.topBarColor
+
+    Loader {
+        id: winMessageLoader
+
+        anchors.fill: root
+        source: "WinMessage.qml"
+        active: false
+    }
+
+    Loader {
+        id: lostMessageLoader
+
+        anchors.fill: root
+        source: "LostMessage.qml"
+        active: false
+    }
 
     Rectangle {
         id: resetButton
@@ -23,13 +42,13 @@ Rectangle {
         height: parent.height
         width: parent.width * StyleConfig.resetButtonWidthKoefficient
 
-
         Text {
             id: resetTextField
 
             anchors {
                 centerIn: resetButton
             }
+
             color: StyleConfig.resetTextColor
 
             text: "reset"
@@ -40,7 +59,6 @@ Rectangle {
                                resetButton.width * StyleConfig.resetWidthKoefficient
                 bold: true
             }
-
         }
 
         MouseArea {
@@ -51,6 +69,8 @@ Rectangle {
 
             onClicked: {
                 root.resetButtonClicked();
+                isWinMessageOn = false;
+                isLostMessageOn = false;
             }
         }
 
