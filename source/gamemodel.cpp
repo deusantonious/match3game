@@ -21,8 +21,8 @@ GameModel::GameModel(QObject *parent, QString settingsFileName) :
     jsonDocument = QJsonDocument::fromJson(configFileContents.toUtf8());
     objects = jsonDocument.object();
 
-    m_gameFieldWidth = objects["width"].toDouble();
-    m_gameFieldHeight = objects["height"].toDouble();
+    m_gameFieldWidth = objects["width"].toInt();
+    m_gameFieldHeight = objects["height"].toInt();
     if (m_gameFieldWidth <= 2 || m_gameFieldHeight < 2) { //game always lost
         throw std::exception();
     }

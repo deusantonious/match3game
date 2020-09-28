@@ -22,7 +22,7 @@ public:
     Q_PROPERTY(int gameFieldHeight READ getGameFieldHeight CONSTANT)
     Q_PROPERTY(int selectedItemId READ getSelectedItemId CONSTANT)
 
-    GameModel(QObject* parent = nullptr, QString settingsFileName = ":\\settings.json");
+    GameModel(QObject* parent = nullptr, QString settingsFileName = ":\settings.json");
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = GameModel::ItemColor) const override;
