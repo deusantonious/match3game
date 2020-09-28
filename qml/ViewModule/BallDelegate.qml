@@ -18,7 +18,7 @@ MouseArea {
         id: ball
 
         anchors {
-            margins: root.height * StyleConfig.ballMarginsKoefficient // heigh always equal width
+            margins: root.height * StyleConfig.ballMarginsKoefficient // height always equal width
             fill: parent
         }
 
@@ -31,11 +31,19 @@ MouseArea {
                    1
 
         states: [
-            State { when: isVisible;
-                PropertyChanges {   target: ball; opacity: 1.0    }
+            State {
+                when: isVisible;
+                PropertyChanges {
+                    target: ball
+                    opacity: 1.0
+                }
             },
-            State { when: !isVisible;
-                PropertyChanges {   target: ball; opacity: 0    }
+            State {
+                when: !isVisible;
+                PropertyChanges {
+                    target: ball
+                    opacity: 0
+                }
             }
         ]
 

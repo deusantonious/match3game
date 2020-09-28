@@ -72,15 +72,15 @@ Item {
         }
 
         move: Transition {
-            onRunningChanged: {
-                if(!running) {
-                    gameModel.makeAllCoincidenceInvisible()
-                }
-            }
-
             NumberAnimation {
                 properties: "x, y"
                 duration: StyleConfig.ballMoveAnimationDuration;
+            }
+
+            onRunningChanged: {
+                if (!running) {
+                    gameModel.makeAllCoincidenceInvisible();
+                }
             }
         }
     }

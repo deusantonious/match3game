@@ -216,7 +216,7 @@ bool GameModel::makeAllCoincidenceInvisible()
     for (int i {0}; i < m_gameFieldHeight; i++) {
         j = 0;
         while (j < m_gameFieldWidth) {
-            if(!m_gameField[i][j].visible) {
+            if (!m_gameField[i][j].visible) {
                 j++;
                 continue;
             }
@@ -338,7 +338,7 @@ bool GameModel::moveToFloor()
             itemsMoved = true;
         }
     }
-    if(itemsMoved) {
+    if (itemsMoved) {
         return true;
     }
     return false;
