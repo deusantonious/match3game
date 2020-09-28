@@ -65,28 +65,28 @@ QVariant GameModel::data(const QModelIndex &index, int role) const
 
     switch (role)
     {
-    case ItemColor:
-    {
-        returnValue = QVariant {m_gameField[index2d.first][index2d.second].color};
-        break;
-    }
-    case IsSelected:
-    {
-        if (index2d == m_selectedItem) {
-            returnValue = QVariant {true};
+        case ItemColor:
+        {
+            returnValue = QVariant {m_gameField[index2d.first][index2d.second].color};
+            break;
         }
-        else {
-            returnValue = QVariant {false};
+        case IsSelected:
+        {
+            if (index2d == m_selectedItem) {
+                returnValue = QVariant {true};
+            }
+            else {
+                returnValue = QVariant {false};
+            }
+            break;
         }
-        break;
+        case BallIsVisible:
+        {
+            returnValue = QVariant {m_gameField[index2d.first][index2d.second].visible};
+            break;
+        }
     }
-    case BallIsVisible:
-    {
-        returnValue = QVariant {m_gameField[index2d.first][index2d.second].visible};
-        break;
-}
-}
-return returnValue;
+    return returnValue;
 }
 
 QHash<int, QByteArray> GameModel::roleNames() const
@@ -247,12 +247,14 @@ int GameModel::getSelectedItemId() const
                 -1;
 }
 
+/* at start we check oldPosition row for coincidences */
+/* if we dont have coincidences in oldPosition row we are calling same function with swapped parameters
+   and looking for coincidences in newPosition row */
 bool GameModel::removeAviableIfSwapRows(std::pair<int, int> oldPosition, std::pair<int, int> newPosition)
 {
     int i;
     int rightElement {oldPosition.second};
     int leftElement {oldPosition.second};
-
     if (oldPosition.second != 0) {
         i = oldPosition.second - 1;
         while (i >= 0 &&
@@ -286,6 +288,7 @@ bool GameModel::removeAviableIfSwapColumns(std::pair<int, int> oldPosition, std:
 {
     int i;
 
+    /* <<--- */
     if (oldPosition.second >= 2) {
         i = oldPosition.second - 1;
         while (i >= 0 &&
@@ -297,6 +300,7 @@ bool GameModel::removeAviableIfSwapColumns(std::pair<int, int> oldPosition, std:
             return true;
         }
     }
+    /* --->>> */
     if (newPosition.second < m_gameFieldWidth - 2) {
         i = newPosition.second + 1;
         while (i < m_gameFieldWidth &&
@@ -311,51 +315,6 @@ bool GameModel::removeAviableIfSwapColumns(std::pair<int, int> oldPosition, std:
     return false;
 }
 
-bool GameModel::anySwapAviable()
-{
-    //    int i {0};
-    //    bool aviable {false};
-    //    while (i < m_size) {
-    //        if(m_gameField[i] == "white") {
-    //            i++;
-    //            continue;
-    //        }
-    //        if(i % m_gameFieldWidth > 0) {
-    //            aviable = removeAviableIfSwapColumns(i,i - 1);
-    //            if(aviable == true) {
-    //                break;
-    //            }
-    //        }
-    //        if(i % m_gameFieldWidth < m_gameFieldWidth - 1) {
-    //            aviable = removeAviableIfSwapColumns(i,i + 1);
-    //            if(aviable == true) {
-    //                break;
-    //            }
-    //        }
-    //        if(i - m_gameFieldWidth >= 0) {
-    //            aviable = removeAviableIfSwapRows(i,i - m_gameFieldWidth);
-    //            if(aviable == true) {
-    //                break;
-    //            }
-    //        }
-    //        if(i + m_gameFieldWidth < m_size) {
-    //            aviable = removeAviableIfSwapRows(i,i + m_gameFieldWidth);
-    //            if(aviable == true) {
-    //                break;
-    //            }
-    //        }
-    //        i++;
-    //    }
-    //    if(aviable) {
-    //        return true;
-    //    }
-    //    else {
-    //        return false;
-    //    }
-    //return true;
-    return false;
-}
-
 bool GameModel::moveToFloor()
 {
     int k {};
@@ -366,6 +325,7 @@ bool GameModel::moveToFloor()
                 continue;
             }
             k = i;
+            /* looking for first visible item in column */
             while (k > 0 && !m_gameField[k][j].visible) {
                 k--;
             }
@@ -386,7 +346,7 @@ bool GameModel::moveToFloor()
 
 bool GameModel::gameIsLost()
 {
-    //
+    //trying to swap each item with lower item
     for (int i {0}; i < m_gameFieldHeight - 1; i++) {
         for (int j {0}; j < m_gameFieldWidth; j++) {
             if (m_gameField[i][j].visible &&
@@ -396,7 +356,7 @@ bool GameModel::gameIsLost()
             }
         }
     }
-    //up
+    //trying to swap each item with upper item
     for (int i {1}; i < m_gameFieldHeight; i++) {
         for (int j {0}; j < m_gameFieldWidth; j++) {
             if (m_gameField[i][j].visible &&
@@ -406,7 +366,7 @@ bool GameModel::gameIsLost()
             }
         }
     }
-    //left
+    //trying to swap each item with left item
     for (int i {0}; i < m_gameFieldHeight; i++) {
         for (int j {0}; j < m_gameFieldWidth - 1; j++) {
             if (m_gameField[i][j].visible &&
@@ -416,6 +376,7 @@ bool GameModel::gameIsLost()
             }
         }
     }
+    //trying to swap each item with right item
     for (int i {0}; i < m_gameFieldHeight; i++) {
         for (int j {1}; j < m_gameFieldWidth; j++) {
             if (m_gameField[i][j].visible &&

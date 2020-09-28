@@ -24,5 +24,7 @@ QtObject {
     readonly property double gameStatusMessageSizeKoefficient: 0.75
     readonly property string gameStatusMessageColor: "#a08c7d"
 
+    readonly property double shakeAnimationDuration: 50
+    readonly property double shakeAnimationScaleValue: 1.1
 
 }

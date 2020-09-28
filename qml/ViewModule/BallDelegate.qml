@@ -8,6 +8,12 @@ MouseArea {
     property bool isVisible: true
     property bool selected: false
 
+    signal itemDeleted();
+
+    function enableShakeAnimation() {
+        shakeAnimation.restart();
+    }
+
     Rectangle {
         id: ball
 
@@ -39,6 +45,12 @@ MouseArea {
                     property: "opacity";
                     duration: StyleConfig.ballDeleteAnimationDuration
                 }
+
+                onRunningChanged: {
+                    if (!running) {
+                        itemDeleted();
+                    }
+                }
             }
         ]
 
@@ -46,6 +58,27 @@ MouseArea {
             ScaleAnimator {
                 target: ball;
                 duration: StyleConfig.ballScaleaAnimationDuration
+            }
+        }
+
+        SequentialAnimation {
+            id: shakeAnimation
+
+            loops: 5
+
+            NumberAnimation {
+                target: ball
+                property: "scale"
+                duration: StyleConfig.shakeAnimationDuration
+                from: 1
+                to: StyleConfig.shakeAnimationScaleValue
+            }
+            NumberAnimation {
+                target: ball
+                property: "scale"
+                duration: StyleConfig.shakeAnimationDuration
+                from: StyleConfig.shakeAnimationScaleValue
+                to: 1
             }
         }
     }

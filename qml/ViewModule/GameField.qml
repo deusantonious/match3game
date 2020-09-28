@@ -45,23 +45,26 @@ Item {
             selected: isSelected
 
             onClicked: {
-                if(gameModel.selectedItemId === -1 || !gameModel.selectedItemBordersWith(index)) {
+                if (gameModel.selectedItemId === -1 || !gameModel.selectedItemBordersWith(index)) {
                     gameModel.selectItem(index);
                 }
                 else {
-                    gameModel.swapSelectedItemWith(index);
-                    while (gameModel.makeAllCoincidenceInvisible() === true) {
-                        gameModel.moveToFloor();
+                    if (!gameModel.swapSelectedItemWith(index)) {
+                        enableShakeAnimation();
                     }
-                    if(gameModel.gameIsLost()) {
-                        gameIsLost();
-                    }
+                }
+            }
+
+            onItemDeleted: {
+               gameModel.moveToFloor();
+
+                if (gameModel.gameIsLost()) {
+                    gameIsLost();
                 }
             }
         }
 
         moveDisplaced: Transition {
-            id: anim1;
             NumberAnimation {
                 properties: "x"
                 duration: StyleConfig.ballMoveAnimationDuration;
@@ -69,7 +72,12 @@ Item {
         }
 
         move: Transition {
-            id: anim2;
+            onRunningChanged: {
+                if(!running) {
+                    gameModel.makeAllCoincidenceInvisible()
+                }
+            }
+
             NumberAnimation {
                 properties: "x, y"
                 duration: StyleConfig.ballMoveAnimationDuration;
