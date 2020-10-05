@@ -72,6 +72,7 @@ private: // methods
     std::pair <int,int> get2dPosition(int index);
     int getIndexFrom2dPosition(std::pair <int,int> position);
     int getIndexFrom2dPosition(int row, int column);
+    QJsonObject readFromJsonFile(QString settingsFileName);
 private: // vars
     int m_gameFieldWidth;
     int m_gameFieldHeight;

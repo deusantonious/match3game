@@ -5,25 +5,11 @@ GameModel::GameModel(QObject *parent, QString settingsFileName) :
 {
     Q_UNUSED(parent)
 
-    QString configFileContents;
-    QFile configFile(settingsFileName);
-    QJsonDocument jsonDocument;
-    QJsonObject objects;
-    QJsonArray aviableColors;
-
-    if (!configFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::exception();
-    }
-    /* Reading json doc */
-    configFileContents = configFile.readAll();
-    configFile.close();
-
-    jsonDocument = QJsonDocument::fromJson(configFileContents.toUtf8());
-    objects = jsonDocument.object();
+    QJsonObject objects {readFromJsonFile(settingsFileName)};
 
     m_gameFieldWidth = objects["width"].toInt();
     m_gameFieldHeight = objects["height"].toInt();
-    if (m_gameFieldWidth <= 2 || m_gameFieldHeight < 2) { //game always lost
+    if (m_gameFieldWidth <= 2 || m_gameFieldHeight <= 2) { //game always lost
         throw std::exception();
     }
 
@@ -35,8 +21,9 @@ GameModel::GameModel(QObject *parent, QString settingsFileName) :
     }
 
     /* Creating aviable colors array */
-    aviableColors = objects["colors"].toArray();
+    QJsonArray aviableColors = objects["colors"].toArray();
     int aviableColorsCount = aviableColors.size();
+
     if (aviableColorsCount <= 1) {
         throw std::exception();
     }
@@ -414,4 +401,22 @@ int GameModel::getIndexFrom2dPosition(std::pair<int, int> position)
 int GameModel::getIndexFrom2dPosition(int row, int column)
 {
     return row * m_gameFieldHeight + column;
+}
+
+QJsonObject GameModel::readFromJsonFile(QString settingsFileName)
+{
+    QString configFileContents;
+    QFile configFile{settingsFileName};
+    QJsonDocument jsonDocument;
+
+    if (!configFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::exception();
+    }
+
+    /* Reading json doc */
+    configFileContents = configFile.readAll();
+    configFile.close();
+
+    jsonDocument = QJsonDocument::fromJson(configFileContents.toUtf8());
+    return jsonDocument.object();
 }

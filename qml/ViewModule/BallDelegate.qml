@@ -72,7 +72,7 @@ MouseArea {
         SequentialAnimation {
             id: shakeAnimation
 
-            loops: 5
+            loops: StyleConfig.shakeAnimationCount
 
             NumberAnimation {
                 target: ball
