@@ -55,9 +55,10 @@ Item {
                 }
             }
 
-            onItemDeleted: {
-               gameModel.moveToFloor();
 
+            onItemDeleted: {
+                gameModel.moveToFloor();
+                gameModel.deleteAllEmptyRowsAndColumns();
                 if (gameModel.gameIsLost()) {
                     gameIsLost();
                 }

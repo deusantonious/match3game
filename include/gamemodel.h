@@ -28,18 +28,14 @@ public:
     QVariant data(const QModelIndex &index, int role = GameModel::ItemColor) const override;
     QHash <int, QByteArray> roleNames() const override;
 
-    enum {
-        ItemColor = Qt::UserRole + 1,
-        IsSelected,
-        BallIsVisible
-    };
-
     int getGameFieldWidth() const;
     int getGameFieldHeight() const;
     int getSelectedItemId() const;
 
+    Q_INVOKABLE void deleteAllEmptyRowsAndColumns();
     Q_INVOKABLE void gameFieldReset();
     Q_INVOKABLE void selectItem(int index);
+
     Q_INVOKABLE bool selectedItemBordersWith(int index);
     Q_INVOKABLE bool swapSelectedItemWith(int index);
     Q_INVOKABLE bool makeAllCoincidenceInvisible();
@@ -64,20 +60,40 @@ public:
        }
     };
 
+    enum {
+        ItemColor = Qt::UserRole + 1,
+        IsSelected,
+        BallIsVisible
+    };
+    enum direction{
+        UP,
+        DOWN,
+        UPDOWN,
+        LEFT,
+        RIGHT,
+        LEFTRIGHT
+    };
 
 private: // methods
-    bool removeAviableIfSwapRows(std::pair<int, int> oldPosition, std::pair<int, int> newPosition);
-    bool removeAviableIfSwapColumns(std::pair<int, int> oldPosition, std::pair<int, int> newPosition);
+    bool removeAviableIfSwap(std::pair<int, int> oldPosition, std::pair<int, int> sourceElement, QVector<int> directions);
     bool anySwapAviable();
-    std::pair <int,int> get2dPosition(int index);
+
     int getIndexFrom2dPosition(std::pair <int,int> position);
     int getIndexFrom2dPosition(int row, int column);
+
+    void swapItems(std::pair<int, int> firstElementPos, std::pair<int, int> secondElementPos);
+
     QJsonObject readFromJsonFile(QString settingsFileName);
+
+    std::pair <int,int> findLastElement(std::pair <int,int> startPosition, int deltaI, int deltaJ, QString color);
+    std::pair <int,int> get2dPosition(int index);
 private: // vars
     int m_gameFieldWidth;
     int m_gameFieldHeight;
     int m_size;
+
     std::pair<int,int> m_selectedItem;
+
     QVector<QVector<Ball>> m_gameField;
     QVector<QString> m_colors;
 };

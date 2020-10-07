@@ -52,28 +52,28 @@ QVariant GameModel::data(const QModelIndex &index, int role) const
 
     switch (role)
     {
-        case ItemColor:
-        {
-            returnValue = QVariant {m_gameField[index2d.first][index2d.second].color};
-            break;
-        }
-        case IsSelected:
-        {
-            if (index2d == m_selectedItem) {
-                returnValue = QVariant {true};
-            }
-            else {
-                returnValue = QVariant {false};
-            }
-            break;
-        }
-        case BallIsVisible:
-        {
-            returnValue = QVariant {m_gameField[index2d.first][index2d.second].visible};
-            break;
-        }
+    case ItemColor:
+    {
+        returnValue = QVariant {m_gameField[index2d.first][index2d.second].color};
+        break;
     }
-    return returnValue;
+    case IsSelected:
+    {
+        if (index2d == m_selectedItem) {
+            returnValue = QVariant {true};
+        }
+        else {
+            returnValue = QVariant {false};
+        }
+        break;
+    }
+    case BallIsVisible:
+    {
+        returnValue = QVariant {m_gameField[index2d.first][index2d.second].visible};
+        break;
+}
+}
+return returnValue;
 }
 
 QHash<int, QByteArray> GameModel::roleNames() const
@@ -103,21 +103,23 @@ void GameModel::gameFieldReset()
     int aviableColorsCount {m_colors.size()};
 
     beginResetModel();
-    m_selectedItem = std::pair <int,int> {-1,-1};
+    m_selectedItem = std::pair <int,int> {-1, -1};
     for (int i {0}; i < m_gameFieldHeight; i++) {
-
-        m_gameField[i][0].color = m_colors[QRandomGenerator::global()->bounded(aviableColorsCount)];
-        m_gameField[i][1].color = m_colors[QRandomGenerator::global()->bounded(aviableColorsCount)];
-        m_gameField[i][0].visible = true;
-        m_gameField[i][1].visible = true;
-
-        for (int j {2}; j< m_gameFieldWidth; j++)  {
-            do {
+        for (int j {0}; j < m_gameFieldWidth; j++)  {
+            while (1) {
                 generatedColorId = QRandomGenerator::global()->bounded(aviableColorsCount);
+                if (i > 1 &&
+                        m_gameField[i - 1][j].color == m_colors[generatedColorId] &&
+                        m_gameField[i - 2][j].color == m_colors[generatedColorId]) {
+                    continue;
+                }
+                if (j > 1 &&
+                        m_gameField[i][j - 1].color == m_colors[generatedColorId] &&
+                        m_gameField[i][j - 1].color == m_colors[generatedColorId]) {
+                    continue;
+                }
+                break;
             }
-            while (m_gameField[i][j - 1].color == m_colors[generatedColorId] &&
-                   m_gameField[i][j - 2].color == m_colors[generatedColorId]);
-
             m_gameField[i][j] = m_colors[generatedColorId];
             m_gameField[i][j].visible = true;
         }
@@ -127,7 +129,7 @@ void GameModel::gameFieldReset()
 
 void GameModel::selectItem(int index)
 {
-    auto position = get2dPosition(index);
+    std::pair<int, int> position {get2dPosition(index)};
     int oldSelectedId {getSelectedItemId()};
 
     if (m_gameField[position.first][position.second].visible) {
@@ -169,27 +171,20 @@ bool GameModel::swapSelectedItemWith(int index)
         }
 
         if (newPosition.first - oldPosition.first == 1) { // if we need to swap rows
-            swapIsAviable = removeAviableIfSwapRows(oldPosition, newPosition);
+            swapIsAviable = removeAviableIfSwap(oldPosition, newPosition, QVector<int> {UP, LEFTRIGHT});
+            if (!swapIsAviable) {
+                swapIsAviable = removeAviableIfSwap(newPosition, oldPosition, QVector<int> {DOWN, LEFTRIGHT});
+            }
         }
         else { // if we need to swap columns
-            swapIsAviable = removeAviableIfSwapColumns(oldPosition, newPosition);
+            swapIsAviable = removeAviableIfSwap(oldPosition, newPosition, QVector<int> {UPDOWN, LEFT});
+            if (!swapIsAviable) {
+                swapIsAviable = removeAviableIfSwap(newPosition, oldPosition, QVector<int> {UPDOWN, RIGHT});
+            }
         }
 
         if (swapIsAviable) {
-            std::swap(m_gameField[oldPosition.first][oldPosition.second], m_gameField[newPosition.first][newPosition.second]);
-            if (newPosition.second - oldPosition.second != 1) {
-                beginMoveRows(QModelIndex(), getIndexFrom2dPosition(oldPosition), getIndexFrom2dPosition(oldPosition), QModelIndex(), getIndexFrom2dPosition(newPosition));
-                endMoveRows();
-                beginMoveRows(QModelIndex(), getIndexFrom2dPosition(newPosition), getIndexFrom2dPosition(newPosition), QModelIndex(), getIndexFrom2dPosition(oldPosition));
-                endMoveRows();
-            }
-            else {
-                beginMoveRows(QModelIndex(), getIndexFrom2dPosition(oldPosition), getIndexFrom2dPosition(oldPosition), QModelIndex(), getIndexFrom2dPosition(newPosition) + 1);
-                endMoveRows();
-            }
-
-            m_selectedItem = std::pair <int, int> {-1,-1};
-            emit dataChanged(createIndex(getIndexFrom2dPosition(oldPosition), getIndexFrom2dPosition(oldPosition)), createIndex(getIndexFrom2dPosition(newPosition), 0), QVector<int> {});
+            swapItems(oldPosition, newPosition);
             return true;
         }
     }
@@ -198,9 +193,9 @@ bool GameModel::swapSelectedItemWith(int index)
 
 bool GameModel::makeAllCoincidenceInvisible()
 {
-    int j, k;
+    int i, j, k;
     bool itemsDeleted {false};
-    for (int i {0}; i < m_gameFieldHeight; i++) {
+    for (i = 0; i < m_gameFieldHeight; i++) {
         j = 0;
         while (j < m_gameFieldWidth) {
             if (!m_gameField[i][j].visible) {
@@ -221,6 +216,27 @@ bool GameModel::makeAllCoincidenceInvisible()
             j++;
         }
     }
+    for (j = 0; j < m_gameFieldWidth; j++) {
+        i = 0;
+        while (i < m_gameFieldHeight) {
+            if (!m_gameField[i][j].visible) {
+                i++;
+                continue;
+            }
+            k = i + 1;
+            while (k < m_gameFieldHeight && m_gameField[k][j].visible && m_gameField[k][j].color == m_gameField[i][j].color) {
+                k++;
+            }
+            if (k - i >= 3) {
+                for (int p {i}; p < k; p++) {
+                    m_gameField[p][j].visible = false;
+                }
+                emit dataChanged(createIndex(getIndexFrom2dPosition(std::pair <int, int> {i, j}), 0), createIndex(getIndexFrom2dPosition(std::pair <int, int> {k -1 , j}), 0), QVector<int> {});
+                itemsDeleted = true;
+            }
+            i++;
+        }
+    }
     if (itemsDeleted) {
         return true;
     }
@@ -234,68 +250,74 @@ int GameModel::getSelectedItemId() const
                 -1;
 }
 
-/* at start we check oldPosition row for coincidences */
-/* if we dont have coincidences in oldPosition row we are calling same function with swapped parameters
-   and looking for coincidences in newPosition row */
-bool GameModel::removeAviableIfSwapRows(std::pair<int, int> oldPosition, std::pair<int, int> newPosition)
+void GameModel::deleteAllEmptyRowsAndColumns()
 {
     int i;
-    int rightElement {oldPosition.second};
-    int leftElement {oldPosition.second};
-    if (oldPosition.second != 0) {
-        i = oldPosition.second - 1;
-        while (i >= 0 &&
-               m_gameField[oldPosition.first][i].color == m_gameField[newPosition.first][newPosition.second].color &&
-               m_gameField[oldPosition.first][i].visible) {
-            i--;
-        }
-        leftElement = i + 1;
-    }
-    if (newPosition.second != m_gameFieldWidth - 1) {
-        i = oldPosition.second + 1;
-        while (i < m_gameFieldWidth &&
-               m_gameField[oldPosition.first][i].color == m_gameField[newPosition.first][newPosition.second].color &&
-               m_gameField[oldPosition.first][i].visible) {
+    for (int j {0}; j < m_gameFieldWidth; j++) {
+        i = 0;
+        while (i < m_gameFieldHeight && !m_gameField[i][j].visible) {
             i++;
         }
-        rightElement = i - 1;
-    }
-    if (rightElement - leftElement < 2) {
-        if (oldPosition.first > newPosition.first) {
-            return false;
-        }
-        if (!removeAviableIfSwapRows(newPosition, oldPosition)) {
-            return false;
+        if (i == m_gameFieldHeight) {
+            for (int k {0}; k < m_gameFieldHeight; k++) {
+                for (int p {j}; p < m_gameFieldWidth - 1; p++) {
+                    swapItems(std::pair<int, int> {k, p}, std::pair<int, int> {k, p + 1});
+                }
+            }
         }
     }
-    return true;
 }
 
-bool GameModel::removeAviableIfSwapColumns(std::pair<int, int> oldPosition, std::pair<int, int> newPosition)
+bool GameModel::removeAviableIfSwap(std::pair<int, int> oldPosition, std::pair<int, int> sourceElement, QVector<int> directions)
 {
-    int i;
-
-    /* <<--- */
-    if (oldPosition.second >= 2) {
-        i = oldPosition.second - 1;
-        while (i >= 0 &&
-               m_gameField[oldPosition.first][i].color == m_gameField[oldPosition.first][newPosition.second].color &&
-               m_gameField[oldPosition.first][i].visible) {
-            i--;
-        }
-        if (oldPosition.second - i >= 3) {
+    if (directions.indexOf(UP) != -1 && oldPosition.first >= 2) {
+        std::pair<int, int> upperLast = findLastElement(std::pair<int, int> {oldPosition.first - 1, oldPosition.second}, -1, 0, m_gameField[sourceElement.first][sourceElement.second].color);
+        if (oldPosition.first - upperLast.first >= 2) {
             return true;
         }
     }
-    /* --->>> */
-    if (newPosition.second < m_gameFieldWidth - 2) {
-        i = newPosition.second + 1;
-        while (i < m_gameFieldWidth &&
-               m_gameField[newPosition.first][i].color == m_gameField[newPosition.first][oldPosition.second].color &&
-               m_gameField[oldPosition.first][i].visible) {
-            i++;
+    if (directions.indexOf(DOWN) != -1 && oldPosition.first <= m_gameFieldHeight - 2) {
+        std::pair<int, int> downLast = findLastElement(std::pair<int, int> {oldPosition.first + 1, oldPosition.second}, 1, 0, m_gameField[sourceElement.first][sourceElement.second].color);
+        if (downLast.first - oldPosition.first >= 2) {
+            return true;
         }
-        if (i - newPosition.second >= 3) {
+    }
+    if (directions.indexOf(UPDOWN) != -1) {
+        int topElement {oldPosition.first};
+        int downElement {oldPosition.first};
+
+        if (oldPosition.first > 0)  {
+            topElement = findLastElement(std::pair<int, int> {oldPosition.first - 1, oldPosition.second}, -1, 0, m_gameField[sourceElement.first][sourceElement.second].color).first;
+        }
+        if (oldPosition.second < m_gameFieldHeight - 1) {
+            downElement = findLastElement(std::pair<int, int> {oldPosition.first + 1, oldPosition.second}, 1, 0, m_gameField[sourceElement.first][sourceElement.second].color).first;
+        }
+        if (downElement - topElement >= 2) {
+            return true;
+        }
+    }
+    if (directions.indexOf(LEFT) != -1 && oldPosition.second >= 2) {
+        std::pair<int, int> leftLast = findLastElement(std::pair<int, int> {oldPosition.first, oldPosition.second - 1}, 0, -1, m_gameField[sourceElement.first][sourceElement.second].color);
+        if (oldPosition.second - leftLast.second >= 2) {
+            return true;
+        }
+    }
+    if (directions.indexOf(RIGHT) != -1 && oldPosition.second <= m_gameFieldWidth - 2) {
+        std::pair<int, int> rightLast = findLastElement(std::pair<int, int> {oldPosition.first, oldPosition.second + 1}, 0, 1, m_gameField[sourceElement.first][sourceElement.second].color);
+        if (rightLast.second - oldPosition.second >= 2) {
+            return true;
+        }
+    }
+    if (directions.indexOf(LEFTRIGHT) != -1) {
+        int leftElement {oldPosition.second};
+        int rightElement {oldPosition.second};
+        if (oldPosition.second > 0)  {
+            leftElement = findLastElement(std::pair<int, int> {oldPosition.first, oldPosition.second - 1}, 0, -1, m_gameField[sourceElement.first][sourceElement.second].color).second;
+        }
+        if (oldPosition.second < m_gameFieldWidth - 1) {
+            rightElement = findLastElement(std::pair<int, int> {oldPosition.first, oldPosition.second + 1}, 0, 1, m_gameField[sourceElement.first][sourceElement.second].color).second;
+        }
+        if (rightElement - leftElement >= 2) {
             return true;
         }
     }
@@ -316,15 +338,12 @@ bool GameModel::moveToFloor()
             while (k > 0 && !m_gameField[k][j].visible) {
                 k--;
             }
-            std::swap(m_gameField[k][j],m_gameField[i][j]);
-            beginMoveRows(QModelIndex(), getIndexFrom2dPosition(k, j), getIndexFrom2dPosition(k, j), QModelIndex(), getIndexFrom2dPosition(i, j));
-            endMoveRows();
-            beginMoveRows(QModelIndex(), getIndexFrom2dPosition(i, j), getIndexFrom2dPosition(i, j), QModelIndex(), getIndexFrom2dPosition(k, j));
-            endMoveRows();
-            emit dataChanged(createIndex(getIndexFrom2dPosition(0, 0), 0), createIndex(getIndexFrom2dPosition(m_gameFieldHeight - 1, m_gameFieldWidth - 1), 0), QVector<int> {});
+
+            swapItems(std::pair<int, int> {k,j}, std::pair<int, int> {i,j});
             itemsMoved = true;
         }
     }
+
     if (itemsMoved) {
         return true;
     }
@@ -334,7 +353,7 @@ bool GameModel::moveToFloor()
 bool GameModel::gameIsLost()
 {
     //trying to swap each item with lower item
-    for (int i {0}; i < m_gameFieldHeight - 1; i++) {
+    /*for (int i {0}; i < m_gameFieldHeight - 1; i++) {
         for (int j {0}; j < m_gameFieldWidth; j++) {
             if (m_gameField[i][j].visible &&
                     m_gameField[i + 1][j].visible &&
@@ -374,6 +393,8 @@ bool GameModel::gameIsLost()
         }
     }
     return true;
+    */
+    return false;
 }
 
 bool GameModel::gameIsWon()
@@ -387,6 +408,7 @@ bool GameModel::gameIsWon()
     }
     return false;
 }
+
 
 std::pair<int, int> GameModel::get2dPosition(int index)
 {
@@ -419,4 +441,46 @@ QJsonObject GameModel::readFromJsonFile(QString settingsFileName)
 
     jsonDocument = QJsonDocument::fromJson(configFileContents.toUtf8());
     return jsonDocument.object();
+}
+
+std::pair<int, int> GameModel::findLastElement(std::pair<int, int> startPosition, int deltaI, int deltaJ, QString color)
+{
+    //1 0 -1
+    int i {startPosition.first};
+    int j {startPosition.second};
+
+    while(i >= 0 && j >= 0 && i < m_gameFieldHeight && j < m_gameFieldWidth) {
+        if (m_gameField[i][j].color == color && m_gameField[i][j].visible) {
+            i += deltaI;
+            j += deltaJ;
+        }
+        else {
+            break;
+        }
+    }
+    i-=deltaI;
+    j-=deltaJ;
+    return std::pair<int, int> {i, j};
+}
+
+void GameModel::swapItems(std::pair<int, int> firstElementPos, std::pair<int, int> secondElementPos)
+{
+    std::swap(m_gameField[firstElementPos.first][firstElementPos.second], m_gameField[secondElementPos.first][secondElementPos.second]);
+
+    int firstIndex {getIndexFrom2dPosition(firstElementPos)};
+    int secondIndex {getIndexFrom2dPosition(secondElementPos)};
+
+    if (secondElementPos.second - firstElementPos.second != 1) {
+        beginMoveRows(QModelIndex(), firstIndex, firstIndex, QModelIndex(), secondIndex);
+        endMoveRows();
+        beginMoveRows(QModelIndex(), secondIndex, secondIndex, QModelIndex(), firstIndex);
+        endMoveRows();
+    }
+    else {
+        beginMoveRows(QModelIndex(), firstIndex, firstIndex, QModelIndex(), secondIndex + 1);
+        endMoveRows();
+    }
+
+    m_selectedItem = std::pair <int, int> {-1, -1};
+    emit dataChanged(createIndex(firstIndex, 0), createIndex(secondIndex, 0), QVector<int> {});
 }

@@ -42,7 +42,7 @@ MouseArea {
                 when: !isVisible;
                 PropertyChanges {
                     target: ball
-                    opacity: 0
+                    opacity: 0.0
                 }
             }
         ]
