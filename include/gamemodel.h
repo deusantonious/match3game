@@ -16,11 +16,15 @@ class GameModel : public QAbstractListModel
     Q_OBJECT
 signals:
     void selectedItemIdChanged();
+    void gameWonChanged();
+    void gameLostChanged();
 
 public:
-    Q_PROPERTY(int gameFieldWidth READ getGameFieldWidth CONSTANT)
-    Q_PROPERTY(int gameFieldHeight READ getGameFieldHeight CONSTANT)
+    Q_PROPERTY(int currentColumnCount READ getCurrentColumnCount CONSTANT)
+    Q_PROPERTY(int currentRowCount READ getcurrentRowCount CONSTANT)
     Q_PROPERTY(int selectedItemId READ getSelectedItemId CONSTANT)
+    Q_PROPERTY(bool gameWon MEMBER m_gameWon NOTIFY gameWonChanged)
+    Q_PROPERTY(bool gameLost MEMBER m_gameLost NOTIFY gameLostChanged)
 
     GameModel(QObject* parent = nullptr, QString settingsFileName = ":\settings.json");
 
@@ -28,8 +32,8 @@ public:
     QVariant data(const QModelIndex &index, int role = GameModel::ItemColor) const override;
     QHash <int, QByteArray> roleNames() const override;
 
-    int getGameFieldWidth() const;
-    int getGameFieldHeight() const;
+    int getCurrentColumnCount() const;
+    int getcurrentRowCount() const;
     int getSelectedItemId() const;
 
     Q_INVOKABLE void deleteAllEmptyRowsAndColumns();
@@ -75,7 +79,7 @@ public:
     };
 
 private: // methods
-    bool removeAviableIfSwap(std::pair<int, int> oldPosition, std::pair<int, int> sourceElement, QVector<int> directions);
+    bool removeAviableIfSwap(std::pair<int, int> newPosition, std::pair<int, int> sourceElement, QVector<int> directions);
     bool anySwapAviable();
 
     int getIndexFrom2dPosition(std::pair <int,int> position);
@@ -88,13 +92,16 @@ private: // methods
     std::pair <int,int> findLastElement(std::pair <int,int> startPosition, int deltaI, int deltaJ, QString color);
     std::pair <int,int> get2dPosition(int index);
 private: // vars
-    int m_gameFieldWidth;
-    int m_gameFieldHeight;
+    int m_currentColumnCount;
+    int m_currentRowCount;
     int m_size;
 
     std::pair<int,int> m_selectedItem;
 
     QVector<QVector<Ball>> m_gameField;
     QVector<QString> m_colors;
+
+    bool m_gameWon;
+    bool m_gameLost;
 };
 

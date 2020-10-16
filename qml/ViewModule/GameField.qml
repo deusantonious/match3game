@@ -5,7 +5,8 @@ import StyleConfig 1.0
 Item {
     id: root
 
-    signal gameIsLost();
+    signal gameIsLost
+    signal gameIsWon
 
     function gameFieldReset() {
         gameModel.gameFieldReset();
@@ -14,14 +15,14 @@ Item {
     GridView {
         id: grid
 
-        property int ballRadius: Math.min(root.height / gameModel.gameFieldHeight, root.width / gameModel.gameFieldWidth)
+        property int ballRadius: Math.min(root.height / gameModel.currentRowCount, root.width / gameModel.currentColumnCount)
 
         anchors {
             centerIn: root
         }
 
-        width: ballRadius * gameModel.gameFieldWidth
-        height: root.height
+        width: ballRadius * gameModel.currentColumnCount
+        height: ballRadius * gameModel.currentRowCount
 
         cellHeight: ballRadius
         cellWidth: ballRadius
@@ -31,6 +32,12 @@ Item {
         model: GameModel {
             id: gameModel
 
+            onGameLostChanged: {
+                gameIsLost();
+            }
+            onGameWonChanged: {
+                gameIsWon();
+            }
         }
 
         delegate: BallDelegate {
@@ -53,15 +60,21 @@ Item {
                         enableShakeAnimation();
                     }
                 }
+
             }
 
 
             onItemDeleted: {
                 gameModel.moveToFloor();
                 gameModel.deleteAllEmptyRowsAndColumns();
-                if (gameModel.gameIsLost()) {
+
+                if (gameModel.gameIsWon()) {
+                    gameIsWon();
+                }
+                else if (gameModel.gameIsLost()) {
                     gameIsLost();
                 }
+
             }
         }
 
